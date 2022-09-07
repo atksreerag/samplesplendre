@@ -19,7 +19,7 @@ app.listen(PORT,() => {
 })
 const connection = async () =>{
     try {
-        await mongoose.connect("mongodb+srv://sreeragatk3:dcrZEiTEvtP38jP6@cluster0.ttu4bsa.mongodb.net/test?retryWrites=true&w=majority") 
+        await mongoose.connect("mongodb+srv://sreeragatk3:dcrZEiTEvtP38jP6@cluster0.ttu4bsa.mongodb.net/testone?retryWrites=true&w=majority") 
         //await mongoose.connect('mongodb://localhost:27017/test');
         
     } catch (error) {

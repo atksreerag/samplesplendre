@@ -1,18 +1,21 @@
 const { User, validateUser } = require('../model/user');
-
+const bcrypt = require('bcrypt');
+const { response } = require('express');
+const saltRounds = 10;
+const jwt = require('jsonwebtoken');
 //user details functions....
 const doAddUser = async (req, res, next) => {
     try {
         let data = req.body;
         const { error } = await validateUser(data);
 
-        // console.log(error)
+        console.log(data)
 
         if (error) {
             res.status(400).json({data: error})
             return resolve({statusCode: 400, status: false, message: '', data: error.details[0].message})
         }
-        console.log(data);
+        //console.log(data);
         
         let schema = new User(data)
         await schema.save()
@@ -26,6 +29,7 @@ const doAddUser = async (req, res, next) => {
 //get user details
 const doGetUser = async (req, res, next) => {
     try {
+       
         //get user details
         let userData = await User.find({}).lean()
         console.log(userData);
@@ -106,12 +110,75 @@ const doDeleteUser = async (req, res, next) => {
     
 }
 
+//sign in user
+const doLogin = async(req, res, next) => {
+    try {
+        let data = req.body;
+        //console.log(data);
+        //check if existing phone
+        let existingUser = await User.findOne({phone: data.phone})
+        //console.log(existingUser);
+        let existingPassword = await User.findOne({password: data.password})
+        let user = existingUser;
+        if (existingUser && existingPassword) {
+
+            ///token
+            let token = jwt.sign({
+                data: 'dummmy'
+              }, 'secret', { expiresIn: '1h' });
+
+              res.status(200).json({user, token})
+              //console.log(token);
+            console.log('user logged');
+        }else{
+            res.status(400).json({message: 'wrong credentials..'})
+        }
+        //console.log('invalid');
+
+        
+        
+        
+    } catch (error) {
+        next(error)
+    }
+}
+
+//auth
+const protect = async(req, res, next) => {
+    try {
+        const bearerHeader = req.headers['authorization'];
+        if (bearerHeader) {
+            const bearer = bearerHeader.split(' ')
+            const bearerToken = bearer[1]
+            let token = bearerToken;
+            if(!token){
+                res.status(400).json({message: 'error,Token was not provided'})
+            }
+            //console.log(token);
+            let isVerifeid = jwt.verify(token,'secret')
+               if (isVerifeid) {
+                next()
+               } else {
+                console.log('err');
+               }
+               
+            
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+
+
 
 module.exports = {
+    protect,
     doAddUser,
     doGetUser,
     doGetOne,
     doEditUser,
-    doDeleteUser
-    
+    doDeleteUser,
+    doLogin
+   
 }
