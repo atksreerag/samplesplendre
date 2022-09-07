@@ -120,23 +120,24 @@ const doLogin = async(req, res, next) => {
         //console.log(existingUser);
         let existingPassword = await User.findOne({password: data.password})
         let user = existingUser;
+        user.password = undefined;
         if (existingUser && existingPassword) {
+            //creating refresh token
+            let refershToken = jwt.sign({
+                data: user
+            }, 'refreshsecret',{ expiresIn: '7d'})
 
             ///token
             let token = jwt.sign({
-                data: 'dummmy'
-              }, 'secret', { expiresIn: '1h' });
+                data: user
+              }, 'secret', { expiresIn: '1d' });
 
-              res.status(200).json({user, token})
+              res.status(200).json({user, token, refershToken})
               //console.log(token);
             console.log('user logged');
         }else{
             res.status(400).json({message: 'wrong credentials..'})
         }
-        //console.log('invalid');
-
-        
-        
         
     } catch (error) {
         next(error)
@@ -146,6 +147,7 @@ const doLogin = async(req, res, next) => {
 //auth
 const protect = async(req, res, next) => {
     try {
+        //token
         const bearerHeader = req.headers['authorization'];
         if (bearerHeader) {
             const bearer = bearerHeader.split(' ')
@@ -155,21 +157,50 @@ const protect = async(req, res, next) => {
                 res.status(400).json({message: 'error,Token was not provided'})
             }
             //console.log(token);
-            let isVerifeid = jwt.verify(token,'secret')
-               if (isVerifeid) {
-                next()
-               } else {
-                console.log('err');
-               }
-               
-            
+            var isVerifeid = jwt.verify(token,'secret')
+            next()
+         
         }
+        // //check refresh nd token
+        // if (isVerifeid) {
+        //     next()
+        //    } else {
+        //     console.log('err');
+        //    }
+        //    res.status(400).json({ message:'jdk'})
+    } catch (error) {
+        res.status(401).json({ message: 'jwt token expired'})
+        console.log('hdh',error);
+    }
+}
+
+//refersh toekm
+const doRefreshToken = async (req, res, next) => {
+    try {
+       
+         //refreshToken
+         const bearerHeaderRefresh = req.headers['authorization'];
+         if (bearerHeaderRefresh) {
+             const bearerRefresh = bearerHeaderRefresh.split(' ')
+             const bearerRefershToken = bearerRefresh[1]
+             let refreshToken = bearerRefershToken;
+             if(!refreshToken){
+                 res.status(400).json({message: 'error,Bearer-Token was not provided'})
+             }
+             let isVerifeidRefresh = jwt.verify(refreshToken,'refreshsecret')
+             if (!isVerifeidRefresh) {
+                res.status(400).json({ message: 'refresh token expired'})
+             }
+            let token = jwt.sign({
+                data: 'user'
+              }, 'secret', { expiresIn: '1h' });
+
+              res.status(200).json({ token })
+         }
     } catch (error) {
         console.log(error);
     }
 }
-
-
 
 
 module.exports = {
@@ -179,6 +210,7 @@ module.exports = {
     doGetOne,
     doEditUser,
     doDeleteUser,
-    doLogin
+    doLogin,
+    doRefreshToken
    
 }
