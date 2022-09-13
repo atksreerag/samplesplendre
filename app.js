@@ -1,8 +1,8 @@
 const bodyParser = require('body-parser');
-const express = require('express')
-const mongoose = require('mongoose')
-const userRoutes = require('../../sreerag/sample/router/user')
-const errorHandler = require('./controller/errorController')
+const express = require('express');
+const mongoose = require('mongoose');
+const userRoutes = require('../../sreerag/sample/router/user');
+const errorHandler = require('./controller/errorController');
 
 const app = express();
 const PORT = 3000;
@@ -12,6 +12,7 @@ app.use(bodyParser.json())
 //user routes .....
 
 app.use('/api/user',userRoutes)
+
 app.use(errorHandler)
 
 app.listen(PORT,() => {

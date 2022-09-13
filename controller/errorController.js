@@ -3,7 +3,7 @@ const router = express.Router()
 
 exports.error = () => {
     try {
-        res.status(400).json(false)
+        res.status(400).json({message:'something error...'})
     } catch (error) {
         console.log("xsjxn");
     }

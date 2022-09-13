@@ -1,0 +1,12 @@
+{
+    "success": {
+        "statusCode": 200,
+        "message": "Operation successful",
+        "data": {}
+    },
+    "error": {
+        "statusCode": 400,
+        "message": "Operation failed",
+        "data": {}
+    }
+}

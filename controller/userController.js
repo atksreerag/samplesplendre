@@ -12,8 +12,8 @@ const doAddUser = async (req, res, next) => {
         console.log(data)
 
         if (error) {
-            res.status(400).json({data: error})
-            return resolve({statusCode: 400, status: false, message: '', data: error.details[0].message})
+            res.status(400).json({data: error.details[0].message})
+            //return resolve({statusCode: 400, status: false, message: '', data: error.details[0].message})
         }
         //console.log(data);
         
@@ -50,6 +50,7 @@ const doGetOne = async (req, res, next) => {
         let userData = await User.findOne({
             _id: id
         }).lean()
+        userData.password = undefined;
         console.log('data',userData);
         res.status(200).json(userData)
     } catch (error) {
@@ -114,27 +115,42 @@ const doDeleteUser = async (req, res, next) => {
 const doLogin = async(req, res, next) => {
     try {
         let data = req.body;
-        //console.log(data);
+        console.log(data);
+        console.log(data.isAdmin);
         //check if existing phone
         let existingUser = await User.findOne({phone: data.phone})
         //console.log(existingUser);
         let existingPassword = await User.findOne({password: data.password})
         let user = existingUser;
         user.password = undefined;
+        let isAdmin = data.isAdmin
         if (existingUser && existingPassword) {
+            if (isAdmin === true) {
+                let refershToken = jwt.sign({
+                    data: user,
+                }, 'refreshsecret',{ expiresIn: '7d'})
+    
+                ///token
+                let token = jwt.sign({
+                    data: user,
+                  }, 'secret', { expiresIn: '1d' });
+    
+                  res.status(200).json({message:'admin login successful..',data, token, refershToken})
+                 
+                //console.log('admin logged');
+            }
             //creating refresh token
             let refershToken = jwt.sign({
-                data: user
+                data: user,
             }, 'refreshsecret',{ expiresIn: '7d'})
 
             ///token
             let token = jwt.sign({
                 data: user
               }, 'secret', { expiresIn: '1d' });
-
-              res.status(200).json({user, token, refershToken})
+              res.status(200).json({ message:'user logged successful',user, token, refershToken})
               //console.log(token);
-            console.log('user logged');
+            //console.log('user logged');
         }else{
             res.status(400).json({message: 'wrong credentials..'})
         }
@@ -144,7 +160,7 @@ const doLogin = async(req, res, next) => {
     }
 }
 
-//auth
+//auth middleware...//
 const protect = async(req, res, next) => {
     try {
         //token
@@ -158,6 +174,7 @@ const protect = async(req, res, next) => {
             }
             //console.log(token);
             var isVerifeid = jwt.verify(token,'secret')
+            //console.log('my:=',isVerifeid);
             next()
          
         }
@@ -202,9 +219,39 @@ const doRefreshToken = async (req, res, next) => {
     }
 }
 
+//admin middelware
+const adminProtect = async (req, res, next) => {
+    try {
+        console.log('startingg..');
+        const bearerHeader = req.headers['authorization'];
+        if (bearerHeader) {
+            const bearer = bearerHeader.split(' ')
+            const bearerToken = bearer[1]
+            let token = bearerToken;
+            if(!token){
+                res.status(400).json({message: 'error,Token was not provided'})
+            }
+            console.log('token is',token);
+            var decoded = jwt.verify(token,'secret')
+            //console.log('decodeduser',decoded.data.isAdmin);
+            if (decoded.data.isAdmin) {
+                console.log('is admin');
+                next()
+            } else {
+                return res.status(400).json({ message: "Error:Unauthorised...."})
+            }
+            
+        }
+    } catch (error) {
+        console.log('err');
+        return res.status(400).json({ message: "Sorry, Something went wrong.."})
+        
+    }
+}
 
 module.exports = {
     protect,
+    adminProtect,
     doAddUser,
     doGetUser,
     doGetOne,

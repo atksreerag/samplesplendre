@@ -20,6 +20,10 @@ const userSchema = mongoose.Schema({
     },
     password: {
         type: String
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
     }
     
     
@@ -54,6 +58,7 @@ exports.validateUser = async (data) => {
             .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
         phone: Joi.number().required(),  
         password : Joi.string().required(),
+        isAdmin: Joi.boolean()
         
     })
     return Schema.validate(data)
