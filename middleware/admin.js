@@ -22,10 +22,15 @@ module.exports = async(req, res, next) => {
 
             return res.status(401).send(error);
         }
-        console.log('requser',req.user);
+        //console.log('requser',req.user);
         req.user = decoded;
-
-        next();
+        console.log('useris',req.user);
+        if (req.user.data.isAdmin) {
+            next()
+        } else {
+            res.status(400).json('Sorry.its not an admin...')
+        }
+        
 
     } catch (e) {
         const error = config.error;

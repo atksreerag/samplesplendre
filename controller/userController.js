@@ -1,8 +1,9 @@
-const { User, validateUser } = require('../model/user');
+/*const { User, validateUser, validateUserEdit } = require('../model/user');
 const bcrypt = require('bcrypt');
 const { response } = require('express');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
+const winston = require('winston')
 //user details functions....
 const doAddUser = async (req, res, next) => {
     try {
@@ -20,9 +21,8 @@ const doAddUser = async (req, res, next) => {
         let schema = new User(data)
         await schema.save()
         console.log(schema);
-        res.status(200).json({message: 'successfully inserted'})
+        res.status(200).json({ message: 'successfully inserted' })
     } catch (error) {
-		console.log("shdgahsd")
         next(error)
     }
 }
@@ -32,7 +32,8 @@ const doGetUser = async (req, res, next) => {
        
         //get user details
         let userData = await User.find({}).lean()
-        console.log(userData);
+        //console.log(userData);
+        winston.info('winston print',userData)
         res.status(200).json(userData)
     } catch (error) {
         next(error)
@@ -61,31 +62,30 @@ const doGetOne = async (req, res, next) => {
 }
 
 
-const doEditUser =async (req, res, next) => {
+const doEditUser = async (req, res, next) => {
     try {
         let data = req.body;
         console.log(data);
-		const { error } = await validateUser(data);
+		const { error } = await validateUserEdit(data);
 
 
         if (error) {
-            res.status(400).json({data: error})
-            return resolve({statusCode: 400, status: false, message: '', data: error.details[0].message})
+            return res.status(400).json({message: error.details[0].message})
+            //return resolve({statusCode: 400, status: false, message: '', data: error.details[0].message})
         }
         let existingUser = await User.findOne({_id: data._id}) 
         
         if (!existingUser) {
-            res.status(400).json(false)
+            res.status(400).json({ message: 'Invalid User...'})
         }
         //update user
         let updatedUser = await User.updateOne({_id: data._id},data)
         console.log('updated',updatedUser);
 
-        res.status(200).json({data: 'user details updated'})
+        res.status(200).json({ message: 'user details updated'})
     } catch (error) {
         console.log('errror is..');
         next(error)
-        //res.status(400).json({userData})
     }
     
     
@@ -124,6 +124,7 @@ const doLogin = async(req, res, next) => {
         let user = existingUser;
         user.password = undefined;
         let isAdmin = data.isAdmin
+        
         if (existingUser && existingPassword) {
             if (isAdmin === true) {
                 let refershToken = jwt.sign({
@@ -173,8 +174,8 @@ const protect = async(req, res, next) => {
                 res.status(400).json({message: 'error,Token was not provided'})
             }
             //console.log(token);
-            var isVerifeid = jwt.verify(token,'secret')
-            //console.log('my:=',isVerifeid);
+            const decoded = jwt.verify(token,'secret')
+            console.log('my:=',token);
             next()
          
         }
@@ -260,4 +261,4 @@ module.exports = {
     doLogin,
     doRefreshToken
    
-}
+}*/

@@ -1,11 +1,12 @@
-const bodyParser = require('body-parser');
+/*const bodyParser = require('body-parser');
 const express = require('express');
 const mongoose = require('mongoose');
+const winston = require('winston/lib/winston/config');
 const userRoutes = require('../../sreerag/sample/router/user');
 const errorHandler = require('./controller/errorController');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 
 app.use(express.json());
 app.use(bodyParser.json())
@@ -16,16 +17,15 @@ app.use('/api/user',userRoutes)
 app.use(errorHandler)
 
 app.listen(PORT,() => {
-    console.log(`server started at ${PORT}`)
+    //console.log(`server started at ${PORT}`)
 })
+
 const connection = async () =>{
     try {
         await mongoose.connect("mongodb+srv://sreeragatk3:dcrZEiTEvtP38jP6@cluster0.ttu4bsa.mongodb.net/testone?retryWrites=true&w=majority") 
-        //await mongoose.connect('mongodb://localhost:27017/test');
-        
+        console.log(`Db Connected at Port ${PORT}`)
     } catch (error) {
-        console.log(error);
+        console.log(`db not connected ${error}`);
     }
 }
-
-connection()
+connection()*/
