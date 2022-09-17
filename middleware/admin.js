@@ -28,7 +28,7 @@ module.exports = async(req, res, next) => {
         if (req.user.data.isAdmin) {
             next()
         } else {
-            res.status(400).json('Sorry.its not an admin...')
+            res.status(400).json('Sorry.Unauthorised User...')
         }
         
 

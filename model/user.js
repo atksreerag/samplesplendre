@@ -1,26 +1,30 @@
 const mongoose = require('mongoose')
 const Joi = require('joi');
-const { string } = require('joi');
+const { string, required } = require('joi');
 const bcrypt = require('bcrypt')
 SALT_WORK_FACTOR = 10;
 Joi.objectId = require('joi-objectid')(Joi)
 
 const userSchema = mongoose.Schema({
     name : {
-        type : String
-        
+        type : String,
+        required: true
     },
     age : {
-        type : Number
+        type : Number,
+        required: true
     },
     email : {
-        type : String
+        type : String,
+        required: true
     },
     phone : {
-        type : Number
+        type : Number,
+        required: true
     },
     password: {
-        type: String
+        type: String,
+        required: true
     },
     isAdmin: {
         type: Boolean,

@@ -4,38 +4,74 @@ const { response } = require('express');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
 const winston = require('winston')
+const config = require("../config.json");
+
+
 //user details functions....
 const doAddUser = async (req, res, next) => {
     try {
         let data = req.body;
         const { error } = await validateUser(data);
 
-        console.log(data)
+        //console.log(data)
 
         if (error) {
+
             res.status(400).json({data: error.details[0].message})
-            //return resolve({statusCode: 400, status: false, message: '', data: error.details[0].message})
+            
         }
+         let existingName = await User.findOne({ name: data.name})
+         if (existingName) {
+            const error = config.error;
+            error.message = 'Name Already exists.'
+            return res.status(400).send(error) 
+         }
+
+         let existingEmail = await User.findOne({ email: data.email})
+         if (existingEmail) {
+            const error = config.error;
+            error.message = 'Email Already exists.'
+            return res.status(400).send(error) 
+         }
+
+         let existingPhone = await User.findOne({ phone: data.phone})
+         if (existingPhone) {
+            const error = config.error;
+            error.message = 'Phone Number Already Exists.'
+            return res.status(400).send(error) 
+         }
         //console.log(data);
-        
+       
         let schema = new User(data)
         await schema.save()
-        console.log(schema);
-        res.status(200).json({ message: 'successfully inserted' })
-    } catch (error) {
-        next(error)
+        //console.log(schema);
+        const success = config.success;
+        success.data = schema
+        res.status(200).send(success)
+
+    } catch (er) {
+        const error = config.error;
+        error.message = 'Something Occured';
+        res.status(400).send(error)
     }
+
 }
+
+
 //get user details
 const doGetUser = async (req, res, next) => {
     try {
         //get user details
         let userData = await User.find({}).lean()
-        //console.log(userData);
-        ////////winston.info('winston print',userData)
-        res.status(200).json(userData)
-    } catch (error) {
-        next(error)
+       
+        let success = config.success;
+        success.data = userData;
+       
+        res.status(200).send(success)
+
+    } catch (err) {
+        const error = config.error;
+        res.status(400).send(error) 
     }
     
     
@@ -47,13 +83,6 @@ const doGetOne = async (req, res, next) => {
         let id = req.params.id
         console.log(id);
 
-        let user = req.user;
-        console.log(req.user);
-
-        if (!user) {
-            res.status(400).json({ message: 'Invalid user..'})
-        }
-
         //get one user
         let userData = await User.findOne({
             _id: id
@@ -62,10 +91,13 @@ const doGetOne = async (req, res, next) => {
         userData.password = undefined;
         console.log('data',userData);
 
-        res.status(200).json(userData)
+        const success = config.success;
+        success.data = userData
+        res.status(200).send(success)
 
-    } catch (error) {
-        next(error)
+    } catch (er) {
+        const error = config.error;
+        res.status(401).send(error)
         }
     
     
@@ -74,6 +106,7 @@ const doGetOne = async (req, res, next) => {
 
 const doEditUser = async (req, res, next) => {
     try {
+
         let data = req.body;
         console.log(data);
 		const { error } = await validateUserEdit(data);
@@ -81,21 +114,25 @@ const doEditUser = async (req, res, next) => {
 
         if (error) {
             return res.status(400).json({message: error.details[0].message})
-            //return resolve({statusCode: 400, status: false, message: '', data: error.details[0].message})
         }
+
         let existingUser = await User.findOne({_id: data._id}) 
         
         if (!existingUser) {
-            res.status(400).json({ message: 'Invalid User...'})
+            const error = config.error;
+            error.message = 'Invalid User..'
+            return res.status(400).send(error) 
+            
         }
         //update user
         let updatedUser = await User.updateOne({_id: data._id},data)
-        console.log('updated',updatedUser);
+         const success = config.success;
+         success.data = updatedUser;
+         return res.status(200).send(success)
 
-        res.status(200).json({ message: 'user details updated'})
-    } catch (error) {
-        console.log('errror is..');
-        next(error)
+    } catch (err) {
+        const error = config.error;
+        return res.status(400).send(error) 
     }
     
     
@@ -107,15 +144,20 @@ const doDeleteUser = async (req, res, next) => {
         let existingUser = await User.findOne({_id: id}) 
 
         if (!existingUser) {
-             res.status(400).json(false)
+            const error = config.error;
+            error.message = 'Invalid User..'
+             res.status(400).send(error)
         }
         //delete user
         await User.deleteOne({_id: id})
-        res.status(200).json({data: 'user details deleted'})
+        const success = config.success;
+        success.message = 'User Details Deleted..'
+        suc.data = undefined;
+        res.status(200).send(success)
 
-    } catch (error) {
-       console.log('false');
-       next(error)
+    } catch (err) {
+      const error = config.error;
+      res.status(400).send(error)
     }
     
     
@@ -133,10 +175,10 @@ const doLogin = async(req, res, next) => {
         let existingPassword = await User.findOne({password: data.password})
         let user = existingUser;
         user.password = undefined;
-        let isAdmin = data.isAdmin
+        
         
         if (existingUser && existingPassword) {
-            if (isAdmin === true) {
+            
                 let refershToken = jwt.sign({
                     data: user,
                 }, 'refreshsecret',{ expiresIn: '7d'})
@@ -145,116 +187,20 @@ const doLogin = async(req, res, next) => {
                 let token = jwt.sign({
                     data: user,
                   }, 'secret', { expiresIn: '1h' });
-    
-                  res.status(200).json({message:'admin login successful..',data, token, refershToken})
-                 
-                //console.log('admin logged');
-            }
-            //creating refresh token
-            let refershToken = jwt.sign({
-                data: user,
-            }, 'refreshsecret',{ expiresIn: '7d'})
 
-            ///token
-            let token = jwt.sign({
-                data: user
-              }, 'secret', { expiresIn: '1h' });
-              res.status(200).json({ message:'user logged successful',user, token, refershToken})
-              //console.log(token);
-            //console.log('user logged');
-        }else{
-            res.status(400).json({ message: 'Wrong Credentials..'})
+                  const success = config.success;
+                  success.data = { user, token, refershToken}
+                  return res.status(200).send(success)
+              
+        } else {
+            const error = config.error;
+            error.message = 'Unauthorised User..'
+            return res.status(200).send(error)
         }
         
-    } catch (error) {
-        next(error)
-    }
-}
-
-//auth middleware...//
-const protect = async(req, res, next) => {
-    try {
-        //token
-        const bearerHeader = req.headers['authorization'];
-        if (bearerHeader) {
-            const bearer = bearerHeader.split(' ')
-            const bearerToken = bearer[1]
-            let token = bearerToken;
-            if(!token){
-                res.status(400).json({message: 'error,Token was not provided'})
-            }
-            //console.log(token);
-            const decoded = jwt.verify(token,'secret')
-            req.user = decoded;
-            console.log('reeq',req.user);
-            next()
-         
-        }
-       
-    } catch (error) {
-        res.status(401).json({ message: 'jwt token expired'})
-        console.log('hdh',error);
-    }
-}
-
-//refersh toekm
-const doRefreshToken = async (req, res, next) => {
-    try {
-       
-         //refreshToken
-         const bearerHeaderRefresh = req.headers['authorization'];
-         if (bearerHeaderRefresh) {
-             const bearerRefresh = bearerHeaderRefresh.split(' ')
-             const bearerRefershToken = bearerRefresh[1]
-             let refreshToken = bearerRefershToken;
-             if(!refreshToken){
-                 res.status(400).json({message: 'error,Bearer-Token was not provided'})
-             }
-             let isVerifeidRefresh = jwt.verify(refreshToken,'refreshsecret')
-             if (!isVerifeidRefresh) {
-                res.status(400).json({ message: 'refresh token expired'})
-             }
-            let token = jwt.sign({
-                data: 'user'
-              }, 'secret', { expiresIn: '1h' });
-
-              res.status(200).json({ token })
-         }
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-//admin middelware
-const adminProtect = async (req, res, next) => {
-    try {
-        console.log('startingg..');
-        const bearerHeader = req.headers['authorization'];
-        if (bearerHeader) {
-            const bearer = bearerHeader.split(' ')
-            const bearerToken = bearer[1]
-            let token = bearerToken;
-            if(!token){
-                res.status(400).json({message: 'error,Token was not provided'})
-            }
-            console.log('token is',token);
-            var decoded = jwt.verify(token,'secret')
-            req.user = decoded;
-            const user = req.user;
-            console.log('my user',user);
-            //console.log('decodeduser',decoded.data.isAdmin);
-            if (user.data.isAdmin) {
-                console.log('is admin');
-                next()
-            } else {
-                return res.status(400).json({ message: "Error:Unauthorised admin...."})
-            }
-            
-        }
-    } catch (error) {
-        console.log('err');
-        return res.status(400).json({ message: "Sorry, Something went wrong.."})
-        
+    } catch (err) {
+        const error = config.error;
+        return res.status(400).send(error)
     }
 }
 
@@ -263,41 +209,38 @@ const refreshTokenUser = (req, res) => {
       let refresh_token = req.headers['x-auth-token'];
 
       if (!refresh_token) {
-        res.status(401).json({ message: 'Access Denied. No Token Provided'})
+        return res.status(401).json({ message: 'Access Denied. No Token Provided'})
       }
 
       let decoded = jwt.verify(refresh_token,'secret');
 
       if (!decoded) {
-        res.status(400).json({ message: 'Invalid Token'})
+        return res.status(400).json({ message: 'Invalid Token'})
       }
 
        req.user = decoded
-      let token = jwt.sign({
-        data: req.user
+       let token = jwt.sign({
+       data: req.user
       },'secret',{
         expiresIn: '1h'
       })
 
       if (!token) {
-        res.status(401).json({ message:'No Token Provided..'})
+         return res.status(401).json({ message:'No Token Provided..'})
       }
 
     } catch (error) {
-        res.status(400).json({ message:'Sorry. Something Went Wrong..'})
+        return res.status(400).json({ message:'Sorry. Something Went Wrong..'})
     }
 }
 
 module.exports = {
-    protect,
-    adminProtect,
     doAddUser,
     doGetUser,
     doGetOne,
     doEditUser,
     doDeleteUser,
     doLogin,
-    doRefreshToken,
     refreshTokenUser
    
 }

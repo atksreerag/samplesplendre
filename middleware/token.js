@@ -3,6 +3,7 @@ const config = require("../config.json");
 
 module.exports = async(req, res, next) => {
     try {
+        console.log('hited');
         //token
         const token = req.headers['x-auth-token'];
 
@@ -29,8 +30,7 @@ module.exports = async(req, res, next) => {
 
     } catch (e) {
         const error = config.error;
-        error.message = "Sorry,Something went wrong";
-
+        
         return res.status(401).send(error);
     }
 }

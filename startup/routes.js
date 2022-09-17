@@ -3,9 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 //const router = require('../router/user');
 const userRouter = require('../router/user');
-module.exports =  function app (){
-
-}
+const error = require('../middleware/error')
 
 
 module.exports = function(app) {
@@ -15,7 +13,7 @@ module.exports = function(app) {
     //user routes .....
     
     app.use('/api/user',userRouter)
+    app.use(error)
 	
 	
 };
-//app.use(errorHandler)
