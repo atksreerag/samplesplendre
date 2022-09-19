@@ -209,13 +209,17 @@ const refreshTokenUser = (req, res) => {
       let refresh_token = req.headers['x-auth-token'];
 
       if (!refresh_token) {
-        return res.status(401).json({ message: 'Access Denied. No Token Provided'})
+        const error = config.error;
+        error.message = "Access Denied. No Token Provided"
+        return res.status(401).send(error)
       }
 
       let decoded = jwt.verify(refresh_token,'secret');
 
       if (!decoded) {
-        return res.status(400).json({ message: 'Invalid Token'})
+        const error = config.error;
+        error.message = 'Access Denied. Invalid Token'
+        return res.status(400).send(error)
       }
 
        req.user = decoded
@@ -226,11 +230,15 @@ const refreshTokenUser = (req, res) => {
       })
 
       if (!token) {
-         return res.status(401).json({ message:'No Token Provided..'})
+        const error = config.error;
+        error.message = 'No Token Provided..'
+        return res.status(401).send(error)
       }
 
-    } catch (error) {
-        return res.status(400).json({ message:'Sorry. Something Went Wrong..'})
+    } catch (err) {
+        const error = config.error;
+        error.message = 'Something Went Wrong.'
+        return res.status(401).send(error)
     }
 }
 

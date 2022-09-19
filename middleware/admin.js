@@ -25,6 +25,7 @@ module.exports = async(req, res, next) => {
         //console.log('requser',req.user);
         req.user = decoded;
         console.log('useris',req.user);
+
         if (req.user.data.isAdmin) {
             next()
         } else {
@@ -34,7 +35,7 @@ module.exports = async(req, res, next) => {
 
     } catch (e) {
         const error = config.error;
-        error.message = "Sorry, Something went wrong";
+        error.message = "Sorry, Something Went Wrong..";
 
         return res.status(401).send(error);
     }
